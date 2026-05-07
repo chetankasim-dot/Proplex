@@ -8,31 +8,15 @@ export const maxDuration = 60
 
 const PROPOSAL_SECTIONS = [
   'exec_summary',
-  'pain_points',
   'scope',
-  'approach',
-  'timeline',
   'commercials',
   'next_steps',
 ] as const
 
-const SYSTEM_PROMPT = `You are an expert ESG consulting proposal writer working inside Proplex, a document intelligence platform for ESG consulting firms. You write professional, persuasive, evidence-grounded proposals.
-
-Given client details and a template type, draft a complete proposal as a single JSON object.
-
-OUTPUT FORMAT — non-negotiable:
-Return one JSON object with EXACTLY these keys, in this order, and no others:
-${PROPOSAL_SECTIONS.map((s) => `- ${s}`).join('\n')}
-
-The "commercials" section covers fees, payment terms, and proposal validity period.
-
-Each value must be a string. Markdown is allowed inside the strings (paragraphs, bullets with "-", sub-headings with "###"). Do NOT wrap the response in code fences. Do NOT add a preamble. Output must be a single JSON object that JSON.parse can read directly.
-
-Length: the full proposal must fit comfortably under ~1500 words across all sections. Be concise — favor specific, evidence-grounded statements over filler.
-
-Tone: clear, confident, specific. Cite frameworks (GRI, SASB, TCFD, CSRD, EcoVadis, CDP, ISSB, SBTi, GHG Protocol) sparingly where they fit naturally. Adjust tone to client tier (SMB: pragmatic; Mid-Market: structured; Enterprise: rigorous), but keep all tiers within the same length budget.
-
-Respond with valid JSON only. No markdown around the JSON, no code fences, no explanation. Start your response with { and end with }`
+const SYSTEM_PROMPT = `You are an ESG proposal writer. Generate a JSON proposal for the client described.
+Return ONLY a JSON object with these keys: ${PROPOSAL_SECTIONS.join(', ')}.
+Each value is a plain text string of 2-3 sentences maximum.
+No markdown around the JSON. Start with { and end with }.`
 
 type FormBody = {
   client_name?: string
@@ -103,7 +87,7 @@ Draft the proposal now.`
     const anthropic = new Anthropic()
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-5',
-      max_tokens: 2000,
+      max_tokens: 1000,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
     })
