@@ -4,25 +4,15 @@ import { getWorkspaceId } from '@/lib/workspace'
 import { CLIENT_TIERS, PROPOSAL_TEMPLATES } from '@/lib/proposals'
 
 export const runtime = 'nodejs'
-export const maxDuration = 120
+export const maxDuration = 60
 
 const PROPOSAL_SECTIONS = [
   'exec_summary',
-  'client_profile',
-  'industry_landscape',
-  'benchmarking',
   'pain_points',
-  'roi',
-  'frameworks',
   'scope',
-  'scope_exclusions',
   'approach',
   'timeline',
-  'case_studies',
-  'team',
-  'milestones',
-  'risks',
-  'terms',
+  'commercials',
   'next_steps',
 ] as const
 
@@ -34,9 +24,13 @@ OUTPUT FORMAT — non-negotiable:
 Return one JSON object with EXACTLY these keys, in this order, and no others:
 ${PROPOSAL_SECTIONS.map((s) => `- ${s}`).join('\n')}
 
+The "commercials" section covers fees, payment terms, and proposal validity period.
+
 Each value must be a string. Markdown is allowed inside the strings (paragraphs, bullets with "-", sub-headings with "###"). Do NOT wrap the response in code fences. Do NOT add a preamble. Output must be a single JSON object that JSON.parse can read directly.
 
-Tone: clear, confident, specific. Cite frameworks (GRI, SASB, TCFD, CSRD, EcoVadis, CDP, ISSB, SBTi, GHG Protocol) where they fit naturally. Calibrate depth to the client tier — SMB: lean and pragmatic; Mid-Market: structured and moderate; Enterprise: deep and rigorous.`
+Length: the full proposal must fit comfortably under ~1500 words across all sections. Be concise — favor specific, evidence-grounded statements over filler.
+
+Tone: clear, confident, specific. Cite frameworks (GRI, SASB, TCFD, CSRD, EcoVadis, CDP, ISSB, SBTi, GHG Protocol) sparingly where they fit naturally. Adjust tone to client tier (SMB: pragmatic; Mid-Market: structured; Enterprise: rigorous), but keep all tiers within the same length budget.`
 
 type FormBody = {
   client_name?: string
@@ -107,7 +101,7 @@ Draft the proposal now.`
     const anthropic = new Anthropic()
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-5',
-      max_tokens: 8000,
+      max_tokens: 2000,
       system: SYSTEM_PROMPT,
       messages: [
         { role: 'user', content: userPrompt },
