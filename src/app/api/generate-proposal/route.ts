@@ -30,7 +30,9 @@ Each value must be a string. Markdown is allowed inside the strings (paragraphs,
 
 Length: the full proposal must fit comfortably under ~1500 words across all sections. Be concise — favor specific, evidence-grounded statements over filler.
 
-Tone: clear, confident, specific. Cite frameworks (GRI, SASB, TCFD, CSRD, EcoVadis, CDP, ISSB, SBTi, GHG Protocol) sparingly where they fit naturally. Adjust tone to client tier (SMB: pragmatic; Mid-Market: structured; Enterprise: rigorous), but keep all tiers within the same length budget.`
+Tone: clear, confident, specific. Cite frameworks (GRI, SASB, TCFD, CSRD, EcoVadis, CDP, ISSB, SBTi, GHG Protocol) sparingly where they fit naturally. Adjust tone to client tier (SMB: pragmatic; Mid-Market: structured; Enterprise: rigorous), but keep all tiers within the same length budget.
+
+Respond with valid JSON only. No markdown around the JSON, no code fences, no explanation. Start your response with { and end with }`
 
 type FormBody = {
   client_name?: string
@@ -103,21 +105,26 @@ Draft the proposal now.`
       model: 'claude-sonnet-4-5',
       max_tokens: 2000,
       system: SYSTEM_PROMPT,
-      messages: [
-        { role: 'user', content: userPrompt },
-        { role: 'assistant', content: '{' },
-      ],
+      messages: [{ role: 'user', content: userPrompt }],
     })
 
     const textParts: string[] = []
     for (const block of message.content) {
       if (block.type === 'text') textParts.push(block.text)
     }
-    const raw = '{' + textParts.join('')
+    const raw = textParts.join('')
+    console.log('[generate-proposal] raw model response:', raw)
+
+    const cleaned = raw
+      .replace(/^\s*```(?:json)?\s*/i, '')
+      .replace(/\s*```\s*$/i, '')
+      .trim()
 
     try {
-      proposal = JSON.parse(raw) as Record<string, string>
-    } catch {
+      proposal = JSON.parse(cleaned) as Record<string, string>
+    } catch (err) {
+      const parseMsg = err instanceof Error ? err.message : 'unknown parse error'
+      console.error('[generate-proposal] JSON.parse failed:', parseMsg, '| cleaned response:', cleaned)
       return Response.json(
         { error: 'Model returned invalid JSON. Try again.' },
         { status: 502 },
